@@ -2,6 +2,8 @@ import Veterinario from "../models/Veterinario.js"
 import generarJWT from "../helpers/generarJWT.js"
 import generarId from "../helpers/generarId.js"
 import emailRegistro from "../helpers/emailRegistro.js"
+import emailOlvidePassword from "../helpers/emailOlvidePassword.js"
+
 
 const registrar = async (req,res) => {
     const { email, nombre } = req.body
@@ -41,22 +43,24 @@ const perfil =  (req,res) => {
 const confirmar = async (req,res) => {
     const { token } = req.params;
 
-    const usuarioConfirmar = await Veterinario.findOne({ token });
-    if(!usuarioConfirmar){
-        const error = new Error('Token no valido');
-        return res.status(404).json({msg: error.message})
-    } 
-    try {
-        usuarioConfirmar.token = null;
-        usuarioConfirmar.confirmado = true;
-        await usuarioConfirmar.save()
-        return res.json({msg: "Usuario confirmado"})
-    } catch (error) {
-        console.log(error)
-    }
-    
+  const usuarioConfirmar = await Veterinario.findOne({ token });
+  console.log(token)
+  console.log(usuarioConfirmar)
 
-    console.log(usuarioConfirmar)
+  if (!usuarioConfirmar) {
+    const error = new Error("Token no válido");
+    return res.status(404).json({ msg: error.message });
+  }
+
+  try {
+    usuarioConfirmar.token = null;
+    usuarioConfirmar.confirmado = true;
+    await usuarioConfirmar.save();
+
+    res.json({ msg: "Usuario Confirmado Correctamente" });
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 const autenticar = async (req,res) => {
@@ -83,16 +87,9 @@ const autenticar = async (req,res) => {
         // Autenticar password de usuario
         res.json({token: generarJWT(usuario.id)})
 
-
-
     } catch (error) {
         console.log(error)
     }
-    
-    
-
-
-
     
 }
 
@@ -106,6 +103,14 @@ const olvidePassword = async (req,res) => {
     try {
         veterinarioExiste.token = generarId();
         await veterinarioExiste.save();
+
+        //Enviar email con instrucciones
+        emailOlvidePassword({
+            email,
+            nombre: veterinarioExiste.nombre,
+            token: veterinarioExiste.token
+        })
+
         return res.json({msg:"Se ha enviado un email con las instrucciones"})
     } catch (error) {
         console.log(error);
