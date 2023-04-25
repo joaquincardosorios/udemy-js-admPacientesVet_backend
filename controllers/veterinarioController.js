@@ -85,7 +85,12 @@ const autenticar = async (req,res) => {
         } 
 
         // Autenticar password de usuario
-        res.json({token: generarJWT(usuario.id)})
+        res.json({
+            _id: usuario._id,
+            nombre: usuario.nombre,
+            email: usuario.email,
+            token: generarJWT(usuario.id)
+        })
 
     } catch (error) {
         console.log(error)
