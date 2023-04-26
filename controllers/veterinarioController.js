@@ -44,8 +44,6 @@ const confirmar = async (req,res) => {
     const { token } = req.params;
 
   const usuarioConfirmar = await Veterinario.findOne({ token });
-  console.log(token)
-  console.log(usuarioConfirmar)
 
   if (!usuarioConfirmar) {
     const error = new Error("Token no válido");
@@ -153,6 +151,65 @@ const nuevoPassword = async (req,res) => {
     }
 }
 
+const actualizarPerfil = async (req,res) => {
+
+    const veterinario = await Veterinario.findById(req.params.id);
+    if(!veterinario){
+        const error = new Error('Hubo un error')
+        return res.status(400).json({msg: error.message})
+    }
+
+    const { email } = req.body
+    if(veterinario.email !== email){
+        const existeEmail = await Veterinario.findOne({email})
+        if(existeEmail){
+            const error = new Error('Ese email ya esta en uso')
+            return res.status(400).json({msg: error.message})
+        }
+    }
+
+    try {
+        veterinario.nombre = req.body.nombre || veterinario.nombre
+        veterinario.telefono = req.body.telefono
+        veterinario.web = req.body.web 
+        veterinario.email = req.body.email || veterinario.email
+
+        const veterinarioActualizado = await veterinario.save()
+        res.json(veterinarioActualizado)
+    } catch (error) {
+        console.log(error)
+    }
+
+}
+
+const actualizarPassword = async (req,res) => {
+    // Leer datos
+    const { id } = req.veterinario
+    const { passwordAntigua, passwordNuevo } = req.body
+
+    // Comprobar vet exista
+    const veterinario = await Veterinario.findById(id);
+    if(!veterinario){
+        const error = new Error('Hubo un error')
+        return res.status(400).json({msg: error.message})
+    }
+
+    // Comprobar pass
+    if (await veterinario.comprobarPassword(passwordAntigua)){
+        // Almacenar nuevo password
+
+        veterinario.password = passwordNuevo
+        await veterinario.save()
+        res.json({msg: 'Password Almacenada correctamente'})
+
+    } else {
+        const error = new Error('El password Actual es Incorrecto')
+        return res.status(400).json({ msg: error.message})
+    }
+
+    
+}
+
 
 
 
@@ -163,5 +220,7 @@ export {
     autenticar,
     olvidePassword,
     comprobarToken,
-    nuevoPassword
+    nuevoPassword,
+    actualizarPerfil,
+    actualizarPassword
 }
